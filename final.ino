@@ -1,12 +1,12 @@
-#include <LiquidCrystal.h>
+#include <LiquidCrystal.h> // appel des librairies
 #include <EEPROM.h>
 #include <math.h>
-LiquidCrystal lcd(8,7,6,5,4,3);
-const int potar = 0;
+LiquidCrystal lcd(8,7,6,5,4,3); // affectations des pins de l'arduino pour l'écran et les entrées
+const int potar = 0; 
 const int potar2 = 1;
 const int capteur =2;
 const int capteur_amp = 3;
-float tension = 0;
+float tension = 0; // déclaration des variables
 float Tare = 0;
 float res = 0;
 float ntc = 0;
@@ -29,7 +29,7 @@ float borne_inf_entree = 0;float borne_sup_entree = 0;
 float borne_inf_sortie = 0;float borne_sup_sortie = 0;
 float coef_mult;
 float coef_add = 0;
-const int BP_TARE = 15;
+const int BP_TARE = 15; // affectation des pins de l'arduino pour les boutons
 const int BP_SELECT = 10;
 const int BP_LEFT = 14;
 const int BP_RIGHT = 9;
@@ -38,19 +38,19 @@ const int BP_DOWN = 13;
 const int BP_EXIT = 11;
 const int BP_COEF_UP = 16;
 const int BP_COEF_DOWN = 17;
-int posMenu_entree = 0;
-int posMenu_sortie = 0;
-int posMenu_Volt = 0;
-int posMenu_Ampere = 0;
-int posMenu_Ohm = 0;
+int posMenu_entree; // index menu
+int posMenu_sortie;
+int posMenu_Volt;
+int posMenu_Ampere;
+int posMenu_Ohm;
 int precision = 0;
-byte micro[8] = {B00000,B00000,B10001,B10001,B11001,B10110,B10000,B10000};
+byte micro[8] = {B00000,B00000,B10001,B10001,B11001,B10110,B10000,B10000}; // création du symbol micro
 String Menu_entree[4]= {"Volt","Ampere","Frequence (Hz)","Ohm"};
 String Menu_Volt[4] = {"Volt [0-1]","Volt [0-2]","Volt [0-5]","Volt [0-10]"}; 
 String Menu_Ampere[2] = {"mA [0-20]","mA [4-20]"};
 String Menu_Ohm[6] = {"[0-2]kohm","[0-10]kohm","Pt100","Pt500","Pt1000","Thermistance NTC"};
 String Menu_sortie[26]= {"bar","mbar","degre","degre celcius","g","kg","g/m^3","Hz","HR","Lux","kLux","mm","micro-metre","m/s","km/h","mm/min","N","cN","daN","N.m","cN.m","Pa","HPa","tr/min","W/m^2","%"};
-byte exitMenu = false;
+byte exitMenu = false; // booleean de vérification
 byte exitBouton = false;
 byte etat_select = false;
 byte etat_tare = false;
@@ -72,33 +72,36 @@ void setup() {
   lcd.clear();
 }
 
-void loop() {
-
+void loop() { // boucle infinie executant le code en permanence 
+              // Main appelant les différente fonctions du programme
   exitBouton = false;
   exitMenu = false;
   etat_select = false ;
   lcd.clear();
   while(!etat_select){accueil();}
   etat_select = false;
+  EEPROM.get(36,posMenu_entree); // récupération de la mémoire morte avec "get" 
   while(!exitMenu){
     navigation_menu_entree();
     affichageMenu_entree();
   }
-  delay(400);
+  EEPROM.put(36,posMenu_entree); // mise en mémoire morte avec "put"
+  delay(400); // delay d'execution permetant de contrer l'erreur humaine 
   exitMenu = false;
   etat_select = false;
   
   /* ############################## BOUCLE MENU VOLT ########################################### */
   
   if(posMenu_entree == 0){
+    EEPROM.get(38,posMenu_Volt);
     while(!exitMenu){
       
       navigation_menu_Volt();
       affichageMenu_Volt();
     } 
-    
+    EEPROM.put(38,posMenu_Volt);
       if(posMenu_Volt == 0){
-       analogReference(INTERNAL1V1); 
+       analogReference(INTERNAL1V1); // changement de valeur interne du potentiel pour un maximum de précision pour le ([0-1v]  
        delay(400);
         etat_select = false;
           while(!etat_select){
@@ -131,7 +134,7 @@ void loop() {
       }
 
       if(posMenu_Volt == 1){
-       analogReference(INTERNAL2V56);
+       analogReference(INTERNAL2V56); // idem pour [0-2v]
        delay(400);
         etat_select = false;
           while(!etat_select){
@@ -164,7 +167,7 @@ void loop() {
       }
       
       if(posMenu_Volt == 2){
-        analogReference(DEFAULT);
+        analogReference(DEFAULT); // retablissement du potentiel par défaut pour le [0-5v]
         delay(400);
         etat_select = false;
           while(!etat_select){
@@ -197,7 +200,7 @@ void loop() {
       }
 
       if(posMenu_Volt == 3){
-        analogReference(DEFAULT);
+        analogReference(DEFAULT); // idem pour le [0-10v]
        delay(400);
         etat_select = false;
           while(!etat_select){
@@ -235,11 +238,12 @@ void loop() {
 
 
   if(posMenu_entree == 1){
+    EEPROM.get(40,posMenu_Ampere);
     while(!exitMenu){
       navigation_menu_Ampere();
       affichageMenu_Ampere();
     }
-
+  EEPROM.put(40,posMenu_Ampere);
     if(posMenu_Ampere == 0){
        delay(400);
         etat_select = false;
@@ -273,7 +277,7 @@ void loop() {
     }
 
     if(posMenu_Ampere == 1){
-      valeur_entree_borne_inf = 197;
+      valeur_entree_borne_inf = 197; // optimisation pour la precision du changement de référence 
        delay(400);
         etat_select = false;
           while(!etat_select){
@@ -340,10 +344,12 @@ void loop() {
 
 
   if(posMenu_entree == 3){
+    EEPROM.get(42,posMenu_Ohm);
     while(!exitMenu){
       navigation_menu_Ohm();
       affichageMenu_Ohm();
     }
+    EEPROM.put(42,posMenu_Ohm);
  
     if(posMenu_Ohm == 0 || posMenu_Ohm == 1){
       delay(400);
@@ -488,13 +494,13 @@ void loop() {
 
 
 void accueil(){
-  boolean etat_BP_SELECT = digitalRead(BP_SELECT);
+  boolean etat_BP_SELECT = digitalRead(BP_SELECT); // lit l'état du bouton
 
   if(etat_BP_SELECT){etat_select = true;}
 
   lcd.setCursor(20,0);
   lcd.print("Appuyez sur select!");
-  lcd.scrollDisplayLeft();
+  lcd.scrollDisplayLeft(); // fait défiler le texte
   delay(300);
 }
 
@@ -532,7 +538,7 @@ void select_coef_mult(){
 
     if(etat_BP_RIGHT){
     coef_mult = coef_mult + 0.00001;
-    delay(50);
+    delay(50); // delais d'affichage pour la rapidité des changement de valeurs
   }
 
   if(etat_BP_LEFT){
@@ -770,7 +776,7 @@ void navigation_menu_Ohm() {
   boolean etat_BP_SELECT = digitalRead(BP_SELECT);
   boolean etat_BP_LEFT = digitalRead(BP_LEFT);
   boolean etat_BP_RIGHT = digitalRead(BP_RIGHT);
-  
+  EEPROM.get(44,posMenu_sortie);
   if( etat_BP_LEFT && posMenu_sortie > 0) {
     lcd.clear();
     posMenu_sortie = (posMenu_sortie - 1) ;
@@ -782,7 +788,9 @@ void navigation_menu_Ohm() {
     posMenu_sortie = (posMenu_sortie + 1) ;
     delay(400);
   }
+  EEPROM.put(44,posMenu_sortie);
   if (etat_BP_SELECT){exitMenu = true;}
+  
 }
 
 
@@ -801,7 +809,7 @@ void mesure(){
     tension = analogRead(potar);
     float valeur = map1(tension,valeur_entree_borne_inf,valeur_entree_borne_sup,
                       valeur_sortie_borne_inf,valeur_sortie_borne_sup);
-     res = (valeur/1000);
+     res = (valeur/1000); // pour augmenter la précision
     
     if(etat_BP_TARE){etat_tare = true;}
 
@@ -829,7 +837,7 @@ void mesure_2v56(){
     tension = analogRead(potar);
     float valeur = map1(tension,valeur_entree_borne_inf,valeur_entree_borne_sup,
                       valeur_sortie_borne_inf,valeur_sortie_borne_sup);
-     res = (valeur/1000)/0.82;
+     res = (valeur/1000)/0.82; // optimiser le pas pour le changement de potentiel interne
     
     if(etat_BP_TARE){etat_tare = true;}
 
@@ -892,6 +900,8 @@ void affichageMenu_sortie(){
   lcd.print(Menu_sortie[posMenu_sortie]); 
   delay(50);
 }
+
+// affichache des unité de sortie et du résultat
 
 void affichage_res_unitee(){
   lcd.clear();  
@@ -1024,7 +1034,7 @@ void calcul_fm(){
   compteur_fm = 0;
   res = coef_mult*compteur_fm + coef_add;
   delay(1000);
-  attachInterrupt(0, anemometre, RISING); 
+  attachInterrupt(0, anemometre, RISING); // compte tous les front montants sur la pins 2 et execute anémometre à chaque front montant
   lcd.clear();
   lcd.setCursor(2,0);
   lcd.write("Vistesse du vent :");
@@ -1048,7 +1058,7 @@ void conversion_pt(){
   double Rpt = (R0 * V) / (V_IN - V);
    double temperature = calcul_pt(Rpt);
   lcd.print(temperature,precision);
-   delay(400);
+   delay(400);                            // calcul réalisé a l'aide des équations quadratiques du Platine
 
    if(etat_BP_EXIT){exitBouton = true;}
   }
@@ -1276,7 +1286,7 @@ void conversion_ntc(){
   double kelvin = calcul(Rth);
   float celsius = kelvin - 273.15;
   lcd.print(celsius,precision);
-  delay(400);
+  delay(400);                                 // calcul commun à toute les thermistances NTC
 
   if(etat_BP_EXIT){exitBouton = true;}
 }
